@@ -1,5 +1,5 @@
-import eventlet
-eventlet.monkey_patch()
+from gevent import monkey
+monkey.patch_all()
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import paho.mqtt.client as paho
@@ -7,10 +7,11 @@ import json
 import plotly.graph_objs as go
 from plotly.io import to_html
 import os
+from flask import has_request_context
+print("Czy kontekst żądania jest dostępny?", has_request_context())
 
 app = Flask(__name__)
-socketio = SocketIO(app)
-
+socketio = SocketIO(app, async_mode='gevent')
 # MQTT konfiguracja
 mqtt_broker = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
 mqtt_port = 8883
