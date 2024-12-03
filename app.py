@@ -10,7 +10,7 @@ from plotly.io import to_html
 import os
 
 app = Flask(__name__)
-socketio = SocketIO(app,  async_mode='gevent')
+socketio = SocketIO(app)
 
 # MQTT konfiguracja
 mqtt_broker = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
@@ -71,7 +71,7 @@ def on_message(client, userdata, msg):
     data["x"].append(x_value)
     data["y"].append(y_value)
     with app.app_context():
-        socketio.emit('new_data', {'x': x_value, 'y': y_value})
+        socketio.emit('new_data', {'x': x_value, 'y': y_value}, broadcast=True)
 
 def start_mqtt():
     print("Próbuję połączyć się z brokerem...")
@@ -91,7 +91,7 @@ def index():
 
 # Uruchamianie MQTT w tle (zgodne z Gunicornem)
 if __name__ != '__main__':
-    socketio.start_background_task(start_mqtt)
+    eventlet.spawn(start_mqtt)
     print("działa")
 
 if __name__ == '__main__':
