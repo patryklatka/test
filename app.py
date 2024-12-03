@@ -101,9 +101,10 @@ def index():
 # Uruchamiamy aplikację Flask
 if __name__ == '__main__':
     # Uruchamiamy MQTT w osobnym wątku
+    print("Próbuję połączyć się z brokerem...")
     mqtt_thread = threading.Thread(target=start_mqtt)
     mqtt_thread.daemon = True
     mqtt_thread.start()
 
     # Uruchamiamy serwer Flask z SocketIO
-    socketio.run(app, host='0.0.0.0')
+    socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
