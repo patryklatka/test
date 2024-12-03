@@ -100,5 +100,5 @@ def index():
 
 # Uruchamianie MQTT w tle (zgodne z Gunicornem)
 if __name__ != '__main__':
-    threading.Thread(target=start_mqtt_thread).start()
+    socketio.start_background_task(start_mqtt)
     print("działa")
