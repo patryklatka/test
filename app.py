@@ -5,6 +5,7 @@ import threading
 import json
 import plotly.graph_objs as go
 from plotly.io import to_html
+import os
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -99,4 +100,4 @@ if __name__ == '__main__':
     mqtt_thread.start()
 
     # Uruchamiamy serwer Flask z SocketIO
-    socketio.run(app, debug=True)
+    socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
