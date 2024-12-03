@@ -67,9 +67,11 @@ def on_message(client, userdata, msg):
 
     data["x"].append(x_value)
     data["y"].append(y_value)
-    socketio.emit('new_data', {'x': x_value, 'y': y_value})
+    with app.app_context():
+        socketio.emit('new_data', {'x': x_value, 'y': y_value})
 
 def start_mqtt():
+    print("Próbuję połączyć się z brokerem...")
     client = paho.Client()
     client.tls_set(tls_version=paho.ssl.PROTOCOL_TLS)
     client.username_pw_set("grupa1", "Haslogrupa1")
@@ -87,7 +89,6 @@ def index():
 # Uruchamianie MQTT w tle (zgodne z Gunicornem)
 if __name__ != '__main__':
     socketio.start_background_task(start_mqtt)
-    # socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 8000)), use_reloader=False, debug=True)
     print("działa")
 
 if __name__ == '__main__':
