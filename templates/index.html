@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wykres z danymi MQTT</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Strona z wykresem z danymi MQTT</h1>
+    <div id="plot"></div>
+
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('connect', function() {
+            console.log('Połączono z WebSocket!');
+        });
+
+        // Nasłuchujemy na dane przychodzące z WebSocket
+        socket.on('new_data', function(data) {
+            console.log("Otrzymano nowe dane:", data);
+            
+            if (data && data.x !== undefined && data.y !== undefined) {
+                Plotly.extendTraces('plot', {
+                    x: [[data.x]],
+                    y: [[data.y]]
+                }, [0]);
+            }
+        });
+
+        // Początkowy wykres (na podstawie danych początkowych z backendu)
+        var initialData = {
+            data: [{
+                x: [],
+                y: [],
+                mode: 'lines+markers',
+                name: 'Dane',
+                hoverinfo: 'text'
+            }],
+            layout: {
+                title: 'Dane z MQTT',
+                xaxis: { title: 'X' },
+                yaxis: { title: 'Y' }
+            }
+        };
+
+        // Renderujemy początkowy wykres
+        Plotly.newPlot('plot', initialData.data, initialData.layout);
+    </script>
+</body>
+</html>
