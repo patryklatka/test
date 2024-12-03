@@ -1,5 +1,5 @@
-import eventlet
-eventlet.monkey_patch()
+# import eventlet
+# eventlet.monkey_patch()
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import paho.mqtt.client as paho
@@ -46,7 +46,7 @@ def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT broker with result code {rc}")
     if rc == 0:
         print("Połączono z brokerem MQTT!")
-        client.subscribe("your_topic")
+        client.subscribe(mqtt_topic)
     else:
         print(f"Połączenie nieudane z kodem błędu {rc}")
 
@@ -106,4 +106,4 @@ if __name__ == '__main__':
     mqtt_thread.start()
 
     # Uruchamiamy serwer Flask z SocketIO
-    socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    socketio.run(app, host='0.0.0.0')
