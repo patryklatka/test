@@ -42,7 +42,11 @@ def create_plot():
 # Funkcja do obsługi połączenia MQTT
 def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT broker with result code {rc}")
-    client.subscribe(mqtt_topic)
+    if rc == 0:
+        print("Połączono z brokerem MQTT!")
+        client.subscribe("your_topic")
+    else:
+        print(f"Połączenie nieudane z kodem błędu {rc}"
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode()
