@@ -46,7 +46,7 @@ def on_connect(client, userdata, flags, rc):
         print("Połączono z brokerem MQTT!")
         client.subscribe("your_topic")
     else:
-        print(f"Połączenie nieudane z kodem błędu {rc}"
+        print(f"Połączenie nieudane z kodem błędu {rc}")
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode()
