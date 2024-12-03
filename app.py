@@ -84,6 +84,7 @@ def start_mqtt():
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(mqtt_broker, mqtt_port, 60)
+    print("print przed loop_start")
     client.loop_start()
 
 def start_mqtt_thread():
