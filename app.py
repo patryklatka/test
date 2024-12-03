@@ -1,10 +1,5 @@
 import eventlet
-eventlet.monkey_patch(
-    os=True,
-    select=True,
-    socket=True,
-    thread=True,
-    time=True)
+eventlet.monkey_patch()
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
@@ -60,6 +55,7 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     try:
         json_data = json.loads(payload)
+        print(f"paylod form mqtt: {json_data}")
         if "x" in json_data and "y" in json_data:
             x_value = json_data["x"]
             y_value = json_data["y"]
@@ -101,7 +97,7 @@ def index():
 
 # Uruchamianie MQTT w tle (zgodne z Gunicornem)
 if __name__ != '__main__':
-    threading.Thread(target=start_mqtt_thread).start()
+    socketio.start_background_task(start_mqtt_thread) 
     print("działa")
 
 if __name__ == '__main__':
