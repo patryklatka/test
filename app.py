@@ -1,5 +1,10 @@
 import eventlet
-eventlet.monkey_patch()
+eventlet.monkey_patch(
+    os=True,
+    select=True,
+    socket=True,
+    thread=True,
+    time=True)
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
@@ -11,6 +16,8 @@ import os
 import threading
 
 app = Flask(__name__)
+with app.app_context():
+        init_db()
 socketio = SocketIO(app, async_mode='eventlet')
 
 # MQTT konfiguracja
