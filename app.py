@@ -55,7 +55,6 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     try:
         json_data = json.loads(payload)
-        print(f"paylod form mqtt: {json_data}")
         if "x" in json_data and "y" in json_data:
             x_value = json_data["x"]
             y_value = json_data["y"]
@@ -72,7 +71,9 @@ def on_message(client, userdata, msg):
 
     data["x"].append(x_value)
     data["y"].append(y_value)
-    with app.app_context():
+    
+    # Użycie kontekstu aplikacji przed wywołaniem emit
+    with app.app_context():  # Zapewnia dostęp do kontekstu aplikacji
         socketio.emit('new_data', {'x': x_value, 'y': y_value}, broadcast=True)
 
 def start_mqtt():
@@ -87,7 +88,8 @@ def start_mqtt():
 
 def start_mqtt_thread():
     # Funkcja start_mqtt uruchomiona w tle
-    start_mqtt()
+    with app.app_context():  # Upewnij się, że kontekst aplikacji jest aktywowany
+        start_mqtt()
 
 # Flask routes
 @app.route('/')
@@ -97,10 +99,5 @@ def index():
 
 # Uruchamianie MQTT w tle (zgodne z Gunicornem)
 if __name__ != '__main__':
-    socketio.start_background_task(start_mqtt_thread) 
+    threading.Thread(target=start_mqtt_thread).start()
     print("działa")
-
-if __name__ == '__main__':
-    print("Próbuję połączyć się z brokerem...")
-    socketio.start_background_task(start_mqtt)
-    socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)), use_reloader=False, debug=True)
