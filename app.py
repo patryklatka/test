@@ -89,8 +89,10 @@ def index():
 # Uruchamianie MQTT w tle (zgodne z Gunicornem)
 if __name__ != '__main__':
     socketio.start_background_task(start_mqtt)
+    # socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 8000)), use_reloader=False, debug=True)
+    print("działa")
 
 if __name__ == '__main__':
     print("Próbuję połączyć się z brokerem...")
     socketio.start_background_task(start_mqtt)
-    socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)), use_reloader=False, debug=True)
