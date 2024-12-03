@@ -8,6 +8,7 @@ import json
 import plotly.graph_objs as go
 from plotly.io import to_html
 import os
+import threading
 
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='eventlet')
@@ -83,6 +84,10 @@ def start_mqtt():
     client.connect(mqtt_broker, mqtt_port, 60)
     client.loop_start()
 
+def start_mqtt_thread():
+    # Funkcja start_mqtt uruchomiona w tle
+    start_mqtt()
+
 # Flask routes
 @app.route('/')
 def index():
@@ -91,7 +96,7 @@ def index():
 
 # Uruchamianie MQTT w tle (zgodne z Gunicornem)
 if __name__ != '__main__':
-    eventlet.spawn(start_mqtt)
+    threading.Thread(target=start_mqtt_thread).start()
     print("działa")
 
 if __name__ == '__main__':
