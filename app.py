@@ -108,3 +108,6 @@ if __name__ == '__main__':
 
     # Uruchamiamy serwer Flask z SocketIO
     socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+
+else:
+    print("eeeeeeeeeeeeelo")
