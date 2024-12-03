@@ -40,6 +40,7 @@ def create_plot():
     fig = go.Figure(data=[trace], layout=layout)
     return to_html(fig, full_html=False)
 
+
 # Funkcja do obsługi MQTT
 def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT broker with result code {rc}")
