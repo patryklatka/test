@@ -4,3 +4,4 @@ paho-mqtt
 plotly
 eventlet
 gunicorn
+gevent
