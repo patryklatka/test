@@ -1,6 +1,6 @@
-Flask==2.2.3
-Flask-SocketIO==5.4.1
-plotly==5.24.1
-paho-mqtt==2.1.0
-eventlet==0.38.0
-gunicorn==20.1.0
+Flask
+Flask-SocketIO
+paho-mqtt
+plotly
+eventlet
+gunicorn

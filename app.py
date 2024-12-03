@@ -1,7 +1,4 @@
-import eventlet
-eventlet.monkey_patch()
-
-from flask import Flask, render_template, has_request_context, request, jsonify
+from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import paho.mqtt.client as paho
 import threading
@@ -14,9 +11,9 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 
 # MQTT konfiguracja
-mqtt_broker = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
+mqtt_broker = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"  # Możesz zmienić na swój broker MQTT
 mqtt_port = 8883
-mqtt_topic = "sensor/data"
+mqtt_topic = "sensor/data"  # Możesz zmienić na odpowiedni temat MQTT
 
 # Zmienna przechowująca dane, które będą wysyłane na stronę
 data = {
@@ -45,18 +42,17 @@ def create_plot():
 # Funkcja do obsługi połączenia MQTT
 def on_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT broker with result code {rc}")
-    if rc == 0:
-        print("Połączono z brokerem MQTT!")
-        client.subscribe(mqtt_topic)
-    else:
-        print(f"Połączenie nieudane z kodem błędu {rc}")
+    client.subscribe(mqtt_topic)
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     print(f"Received message: {payload} on topic {msg.topic}")
 
     try:
+        # Próbujemy zinterpretować wiadomość jako JSON
         json_data = json.loads(payload)
+        
+        # Sprawdzamy, czy json_data zawiera klucze 'x' i 'y'
         if "x" in json_data and "y" in json_data:
             x_value = json_data["x"]
             y_value = json_data["y"]
@@ -64,22 +60,18 @@ def on_message(client, userdata, msg):
             raise ValueError("Wiadomość JSON nie zawiera kluczy 'x' i 'y'")
 
     except json.JSONDecodeError:
+        # Jeśli nie udało się zdekodować jako JSON, traktujemy wiadomość jako liczbę
         try:
-            value = int(payload)
-            x_value = len(data["x"]) + 1
-            y_value = value
+            value = int(payload)  # Sprawdzamy, czy to liczba całkowita
+            x_value = len(data["x"]) + 1  # Możemy ustawić kolejną wartość X (np. numer punktu)
+            y_value = value  # Przypisujemy wartość do Y
         except ValueError:
             print("Wiadomość nie jest liczbą ani JSON-em")
             return
 
+    # Dodajemy dane do list
     data["x"].append(x_value)
     data["y"].append(y_value)
-
-    # Sprawdzamy, czy kontekst żądania jest dostępny
-    if has_request_context():
-        print("Kontekst żądania jest dostępny.")
-    else:
-        print("Kontekst żądania NIE jest dostępny.")
 
     # Wysyłamy dane do front-endu przez WebSocket
     socketio.emit('new_data', {'x': x_value, 'y': y_value})
@@ -92,7 +84,7 @@ def start_mqtt():
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(mqtt_broker, mqtt_port, 60)
-    client.loop_start()
+    client.loop_start()  # Rozpoczynamy nasłuchiwanie wiadomości MQTT
 
 # Trasa Flask
 @app.route('/')
@@ -103,7 +95,6 @@ def index():
 # Uruchamiamy aplikację Flask
 if __name__ == '__main__':
     # Uruchamiamy MQTT w osobnym wątku
-    print("Próbuję połączyć się z brokerem...")
     mqtt_thread = threading.Thread(target=start_mqtt)
     mqtt_thread.daemon = True
     mqtt_thread.start()
