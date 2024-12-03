@@ -74,7 +74,7 @@ def on_message(client, userdata, msg):
     
     # Użycie kontekstu aplikacji przed wywołaniem emit
     with app.app_context():  # Zapewnia dostęp do kontekstu aplikacji
-        socketio.emit('new_data', {'x': x_value, 'y': y_value}, broadcast=True)
+        socketio.emit('new_data', {'x': x_value, 'y': y_value})
 
 def start_mqtt():
     print("Próbuję połączyć się z brokerem...")
