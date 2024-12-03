@@ -16,8 +16,6 @@ import os
 import threading
 
 app = Flask(__name__)
-with app.app_context():
-        init_db()
 socketio = SocketIO(app, async_mode='eventlet')
 
 # MQTT konfiguracja
