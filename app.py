@@ -11,7 +11,7 @@ import os
 import threading
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='threading')
 
 # MQTT konfiguracja
 mqtt_broker = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
