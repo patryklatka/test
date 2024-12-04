@@ -91,7 +91,7 @@ def start_mqtt_thread():
     # Funkcja start_mqtt uruchomiona w tle
     with app.app_context():  # Upewnij się, że kontekst aplikacji jest aktywowany
         start_mqtt()
-ap
+
 # Flask routes
 @app.route('/')
 def index():
