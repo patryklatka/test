@@ -12,6 +12,9 @@
     <h1>Strona z wykresem z danymi MQTT</h1>
     <div id="plot"></div>
 
+    <!-- Jeden przycisk do włączania/wyłączania światła -->
+    <button id="lightButton">Włącz światło</button>
+
     <script>
         var socket = io.connect( document.domain + ':' + location.port);
 
@@ -49,6 +52,27 @@
 
         // Renderujemy początkowy wykres
         Plotly.newPlot('plot', initialData.data, initialData.layout);
+
+        // Funkcja do wysyłania komendy do backendu
+        function sendLightCommand(command) {
+            socket.emit('light_command', { command: command });
+        }
+
+        // Inicjalny stan przycisku
+        var lightState = 'off'; // Możliwe wartości: 'on', 'off'
+
+        // Obsługuje kliknięcie w przycisk "Włącz/wyłącz światło"
+        $('#lightButton').on('click', function() {
+            if (lightState === 'off') {
+                sendLightCommand('on');
+                $('#lightButton').text('Wyłącz światło'); // Zmienia tekst przycisku
+                lightState = 'on'; // Zmienia stan światła na "on"
+            } else {
+                sendLightCommand('off');
+                $('#lightButton').text('Włącz światło'); // Zmienia tekst przycisku
+                lightState = 'off'; // Zmienia stan światła na "off"
+            }
+        });
     </script>
 </body>
 </html>
