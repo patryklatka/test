@@ -1,5 +1,5 @@
-from gevent import monkey
-monkey.patch_all()
+import eventlet
+eventlet.monkey_patch()
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
@@ -10,7 +10,7 @@ from plotly.io import to_html
 
 
 app = Flask(__name__)
-socketio = SocketIO(app, async_mode="gevent")
+socketio = SocketIO(app, async_mode='eventlet')
 
 # MQTT konfiguracja
 mqtt_broker = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
