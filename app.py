@@ -7,11 +7,10 @@ import paho.mqtt.client as paho
 import json
 import plotly.graph_objs as go
 from plotly.io import to_html
-import os
-import threading
+
 
 app = Flask(__name__)
-socketio = SocketIO(app, async_mode='gevent')
+socketio = SocketIO(app, async_mode='eventlet')
 
 # MQTT konfiguracja
 mqtt_broker = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
