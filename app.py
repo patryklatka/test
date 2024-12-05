@@ -3,23 +3,20 @@ eventlet.monkey_patch()
 
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
-from flask_mqtt import Mqtt
+import paho.mqtt.client as paho
 import json
 import plotly.graph_objs as go
 from plotly.io import to_html
+import os
+import threading
 
 app = Flask(__name__)
+socketio = SocketIO(app, async_mode='gevent')
 
-# Flask-MQTT konfiguracja
-app.config['MQTT_BROKER_URL'] = '1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud'
-app.config['MQTT_BROKER_PORT'] = 8883
-app.config['MQTT_USERNAME'] = 'grupa1'  # Nazwa użytkownika
-app.config['MQTT_PASSWORD'] = 'Haslogrupa1'  # Hasło użytkownika
-app.config['MQTT_TLS_ENABLED'] = True  # Szyfrowanie TLS
-
-# Inicjalizacja SocketIO i Flask-MQTT
-socketio = SocketIO(app, async_mode='eventlet')
-mqtt = Mqtt(app)
+# MQTT konfiguracja
+mqtt_broker = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
+mqtt_port = 8883
+mqtt_topic = "sensor/data"
 
 # Zmienna przechowująca dane
 data = {
@@ -45,15 +42,17 @@ def create_plot():
     fig = go.Figure(data=[trace], layout=layout)
     return to_html(fig, full_html=False)
 
-# Obsługa zdarzeń MQTT
-@mqtt.on_connect()
-def handle_connect(client, userdata, flags, rc):
-    print(f"Connected to MQTT broker with result code {rc}")
-    mqtt.subscribe('sensor/data')
 
-@mqtt.on_message()
-def handle_mqtt_message(client, userdata, message):
-    payload = message.payload.decode()
+# Funkcja do obsługi MQTT
+def on_connect(client, userdata, flags, rc):
+    print(f"Connected to MQTT broker with result code {rc}")
+    if rc == 0:
+        client.subscribe(mqtt_topic)
+    else:
+        print(f"Connection failed with error code {rc}")
+
+def on_message(client, userdata, msg):
+    payload = msg.payload.decode()
     try:
         json_data = json.loads(payload)
         if "x" in json_data and "y" in json_data:
@@ -72,9 +71,26 @@ def handle_mqtt_message(client, userdata, message):
 
     data["x"].append(x_value)
     data["y"].append(y_value)
+    
+    # Użycie kontekstu aplikacji przed wywołaniem emit
+    with app.app_context():  # Zapewnia dostęp do kontekstu aplikacji
+        socketio.emit('new_data', {'x': x_value, 'y': y_value})
 
-    # Emitowanie nowych danych do klientów w czasie rzeczywistym
-    socketio.emit('new_data', {'x': x_value, 'y': y_value})
+def start_mqtt():
+    print("Próbuję połączyć się z brokerem...")
+    client = paho.Client()
+    client.tls_set(tls_version=paho.ssl.PROTOCOL_TLS)
+    client.username_pw_set("grupa1", "Haslogrupa1")
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect(mqtt_broker, mqtt_port, 60)
+    print("print przed loop_start")
+    client.loop_start()
+
+def start_mqtt_thread():
+    # Funkcja start_mqtt uruchomiona w tle
+    with app.app_context():  # Upewnij się, że kontekst aplikacji jest aktywowany
+        start_mqtt()
 
 # Flask routes
 @app.route('/')
@@ -82,6 +98,8 @@ def index():
     plot_html = create_plot()
     return render_template('index.html', plot_html=plot_html)
 
-# Konfiguracja Gunicorna
+# Uruchamianie MQTT w tle (zgodne z Gunicornem)
 if __name__ != '__main__':
-    print("Gunicorn started with app:app")
+    with app.app_context(): 
+        socketio.start_background_task(start_mqtt)
+    print("działa")
