@@ -107,7 +107,7 @@ def handle_light_command(data):
 @app.route('/')
 def index():
     plot_html = create_plot()
-    return render_template('index.html', plot_html=plot_html)
+    return render_template('menu.html', plot_html=plot_html)
 
 # Uruchamianie aplikacji
 if __name__ == '__main__':

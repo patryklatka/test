@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wykres z danymi MQTT</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+    </head>
+<body>
+    <!-- Menu główne -->
+    <div id="mainMenu" class="section visible">
+        <h1>Menu Główne</h1>
+        
+        <!-- Kontrolki światła -->
+        <div class="light-control">
+            <button id="lightButton">Włącz światło</button>
+            <div class="circle" id="lightIndicator"></div>
+        </div>
+
+        <!-- Kontrolki wiatraka -->
+        <div class="fan-control">
+            <button id="fanButton">Włącz wiatrak</button>
+            <div class="fan" id="fanIndicator">
+                <div></div> <!-- Trzecia łopatka -->
+            </div>
+        </div>
+
+        <!-- Kontrolki temperatury -->
+        <div class="temperature-control">
+            <button id="temperatureButton">Temperatura</button>
+            <div id="temperatureDisplay">25°C</div>
+        </div>
+    </div>
+
+    <!-- Sekcja wykresu -->
+    <div id="plotSection" class="section">
+        <h1>Wykres z danymi MQTT</h1>
+        <button id="backToMenuButton">Powrót do menu</button>
+        <div id="plot"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
