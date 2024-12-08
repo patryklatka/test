@@ -14,6 +14,12 @@ from flask_mqtt import Mqtt
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='gevent')
 
+"""
+Uruchamiaj w render.com z: gunicorn -w 1 -k gevent -b 0.0.0.0:$PORT app:app
+
+Przez to że używam flask_mqtt, warning z websocketem naprawia uruchamianie z: gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app
+"""
+
 # Konfiguracja MQTT
 app.config['MQTT_BROKER_URL'] = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
 app.config['MQTT_BROKER_PORT'] = 8883
@@ -21,7 +27,7 @@ app.config['MQTT_USERNAME'] = "grupa1"
 app.config['MQTT_PASSWORD'] = "Haslogrupa1"
 app.config['MQTT_TLS_ENABLED'] = True
 app.config['MQTT_KEEP_ALIVE'] = 60
-app.config['MQTT_TLS_VERSION'] = paho.ssl.PROTOCOL_TLS
+app.config['MQTT_TLS_VERSION'] = paho.ssl.PROTOCOL_TLS   # przetestuj też ssl.PROTOCOL_TLS_CLIENT
 
 mqtt = Mqtt(app)
 
