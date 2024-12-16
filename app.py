@@ -34,6 +34,14 @@ mqtt = Mqtt(app)
 # Tematy MQTT
 mqtt_topic = "sensor/data"
 light_topic = "swiatlo"
+fan_topic = "wiatrak"
+humidity_topic = "wilgotnosc"
+
+# Zmienna przechowująca dane dla wilgotności
+humidity_data = {
+    "x": [],
+    "y": []
+}
 
 # Zmienna przechowująca dane
 data = {
@@ -41,59 +49,91 @@ data = {
     "y": []
 }
 
-# Funkcja do tworzenia wykresu
-def create_plot():
-    trace = go.Scatter(
-        x=data["x"],
-        y=data["y"],
-        mode='lines+markers',
-        name='Dane',
-        hovertext=[f"X: {x_val}, Y: {y_val}" for x_val, y_val in zip(data["x"], data["y"])],
-        hoverinfo='text'
-    )
-    layout = go.Layout(
-        title='Dane z MQTT',
-        xaxis=dict(title='X'),
-        yaxis=dict(title='Y')
-    )
-    fig = go.Figure(data=[trace], layout=layout)
-    return to_html(fig, full_html=False)
 
 # Obsługa połączenia MQTT
 @mqtt.on_connect()
 def handle_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT broker with result code {rc}")
     if rc == 0:
-        mqtt.subscribe(mqtt_topic)
+        mqtt.subscribe(mqtt_topic)  # Subskrypcja danych sensora
+        mqtt.subscribe(light_topic)  # Subskrypcja światła
+        mqtt.subscribe(fan_topic)  # Subskrypcja wiatraka
+        mqtt.subscribe(humidity_topic)  # Subskrypcja wilgotności
     else:
         print(f"Connection failed with error code {rc}")
 
 # Obsługa wiadomości MQTT
 @mqtt.on_message()
 def handle_message(client, userdata, message):
-    payload = message.payload.decode()
-    try:
-        json_data = json.loads(payload)
-        if "x" in json_data and "y" in json_data:
-            x_value = json_data["x"]
-            y_value = json_data["y"]
-        else:
-            raise ValueError("Message JSON lacks 'x' and 'y'")
-    except json.JSONDecodeError:
-        try:
-            value = int(payload)
-            x_value = len(data["x"]) + 1
-            y_value = value
-        except ValueError:
-            print("Message is neither JSON nor integer")
-            return
+    topic = message.topic  # Temat wiadomości MQTT
+    payload = message.payload.decode()  # Dekodowanie ładunku wiadomości
+    print(f"Odebrano wiadomość na temacie '{topic}': {payload}")
 
-    data["x"].append(x_value)
-    data["y"].append(y_value)
+    if topic == mqtt_topic:  # Obsługa danych sensora
+        try:
+            json_data = json.loads(payload)
+            if "x" in json_data and "y" in json_data:
+                x_value = json_data["x"]
+                y_value = json_data["y"]
+            else:
+                raise ValueError("Message JSON lacks 'x' and 'y'")
+        except json.JSONDecodeError:
+            try:
+                value = int(payload)
+                x_value = len(data["x"]) + 1
+                y_value = value
+            except ValueError:
+                print("Message is neither JSON nor integer")
+                return
+
+        data["x"].append(x_value)
+        data["y"].append(y_value)
+
+        # Emitowanie nowych danych do klienta
+        with app.app_context():
+            socketio.emit('new_data', {'x': x_value, 'y': y_value})
+
+    elif topic == light_topic:  # Obsługa światła
+        if payload in ['on', 'off']:
+            state = 'włączono' if payload == 'on' else 'wyłączono'
+            print(f"Światło zostało {state}")
+            # Emitowanie stanu swiatla do klienta
+            with app.app_context():
+                socketio.emit('light_state', {'state': payload})
+
+    elif topic == fan_topic:  # Obsługa wiatraka
+        if payload in ['on', 'off']:
+            state = 'włączony' if payload == 'on' else 'wyłączony'
+            print(f"Wiatrak został {state}")
+            # Emitowanie stanu wiatraka do klienta
+            with app.app_context():
+                socketio.emit('fan_state', {'state': payload})
+
+    elif topic == humidity_topic:  # Obsługa wilgotności
+        try:
+            json_data = json.loads(payload)
+            if "x" in json_data and "y" in json_data:
+                x_value = json_data["x"]
+                y_value = json_data["y"]
+            else:
+                raise ValueError("Message JSON lacks 'x' and 'y'")
+        except json.JSONDecodeError:
+            try:
+                value = float(payload)
+                x_value = len(humidity_data["x"]) + 1
+                y_value = value
+            except ValueError:
+                print("Message is neither JSON nor float")
+                return
+
+        humidity_data["x"].append(x_value)
+        humidity_data["y"].append(y_value)
+
+        # Emitowanie nowych danych do klienta
+        with app.app_context():
+            socketio.emit('new_humidity_data', {'x': x_value, 'y': y_value})
+
     
-    # Użycie kontekstu aplikacji przed wywołaniem emit
-    with app.app_context():
-        socketio.emit('new_data', {'x': x_value, 'y': y_value})
 
 # Funkcja do obsługi komendy włącz/wyłącz światło
 @socketio.on('light_command')
@@ -103,11 +143,19 @@ def handle_light_command(data):
         mqtt.publish(light_topic, command)
         print(f"Wysłano komendę {command} do tematu {light_topic}")
 
+# Funkcja do obsługi komendy włącz/wyłącz wiatraka
+@socketio.on('fan_command')
+def handle_fan_command(data):
+    command = data['command']
+    if command in ['on', 'off']:
+        mqtt.publish(fan_topic, command)
+        print(f"Wysłano komendę {command} do tematu {fan_topic}")
+
+
 # Flask routes
 @app.route('/')
-def index():
-    plot_html = create_plot()
-    return render_template('menu.html', plot_html=plot_html)
+def menu():
+    return render_template('menu.html')
 
 # Uruchamianie aplikacji
 if __name__ == '__main__':

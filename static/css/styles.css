@@ -1,3 +1,14 @@
+/* Styl dla ogólnego kontenera z kontrolkami */
+.controls-container {
+    width: 320px; /* Szerokość prostokąta */
+    padding: 20px; /* Odstęp wewnętrzny */
+    margin: 20px auto; /* Wyśrodkowanie kontenera */
+    border: 2px solid #aaa; /* Ramka prostokąta */
+    border-radius: 20px; /* Zaokrąglone rogi */
+    background-color: #f5f5f5; /* Kolor tła */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Delikatny cień */
+}
+
 /* Ogólne style dla menu i kontrolki */
 body {
     font-family: Arial, sans-serif;
@@ -54,6 +65,25 @@ button:hover {
     color: #333;
 }
 
+/* Styl dla wilgotnosci */
+.humidity-control {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    width: 200px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 2px solid #ccc;
+    border-radius: 15px;
+    margin-bottom: 15px;
+}
+
+#humidityDisplay {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
 /* Ukrywanie wykresu i kontrolki po kliknięciu */
 .hidden {
     display: none;
@@ -69,7 +99,7 @@ button:hover {
 }
 
 /* Styl dla kontrolek (świeca, wiatrak, temperatura) */
-.fan-control, .light-control, .temperature-control {
+.fan-control, .light-control, .temperature-control, .humidity-control{
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -87,14 +117,10 @@ button:hover {
     height: 20px;
     border-radius: 50%;
     display: inline-block;
-    background-color: yellow; /* Początkowy kolor */
+    background-color: black; /* Początkowy kolor */
     border: 2px solid black; /* Czarna obramówka */
 }
 
-.circle {
-    background-color: yellow;
-    border: 2px solid black;
-}
 
 .fan {
     width: 40px;
@@ -138,3 +164,39 @@ button:hover {
         transform: rotate(360deg);
     }
 }
+
+h1 {
+    text-align: center;
+}
+
+/* Styl dla napisu "Grupa 1" */
+h2 {
+    font-size: 24px; /* Zmieniamy rozmiar czcionki */
+    font-weight: bold; /* Ustawiamy pogrubienie */
+    text-align: center; /* Wyśrodkowanie tekstu */
+    /* margin-bottom: 15px; Odstęp od kolejnych elementów */
+    margin-top: 5px; 
+}
+
+
+/* Ustawienia dla kontenera przycisku i ikony */
+.control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#lightCircleGroup2 {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: gray; /* Początkowy kolor */
+}
+
+
+
+
+
+
+
