@@ -16,7 +16,7 @@ function createPlot() {
         }
     };
 
-    Plotly.newPlot('plot', initialData.data, initialData.layout);
+    Plotly.newPlot('gr1_temperaturePlot', initialData.data, initialData.layout);
 }
 
 // Funkcja do tworzenia wykresu wilgotności
@@ -36,5 +36,5 @@ function createHumidityPlot() {
         }
     };
 
-    Plotly.newPlot('humidityPlot', initialHumidityData.data, initialHumidityData.layout);
+    Plotly.newPlot('gr1_humidityPlot', initialHumidityData.data, initialHumidityData.layout);
 }

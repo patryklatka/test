@@ -1,5 +1,5 @@
 /* Styl dla ogólnego kontenera z kontrolkami */
-.controls-container {
+.gr1_controls-container {
     width: 320px; /* Szerokość prostokąta */
     padding: 20px; /* Odstęp wewnętrzny */
     margin: 20px auto; /* Wyśrodkowanie kontenera */
@@ -40,14 +40,14 @@ button:hover {
 }
 
 /* Kontener na wykres */
-#plot {
+#gr1_temperaturePlot {
     width: 100%;
     height: 400px;
     display: block; /* Wykres jest widoczny */
 }
 
 /* Styl dla temperatury */
-.temperature-control {
+.gr1_temperature-control {
     display: flex;
     justify-content: space-between;
     gap: 10px;
@@ -59,14 +59,14 @@ button:hover {
     margin-bottom: 15px;
 }
 
-#temperatureDisplay {
+#gr1_temperatureDisplay {
     font-size: 16px;
     font-weight: bold;
     color: #333;
 }
 
 /* Styl dla wilgotnosci */
-.humidity-control {
+.gr1_humidity-control {
     display: flex;
     justify-content: space-between;
     gap: 10px;
@@ -78,7 +78,7 @@ button:hover {
     margin-bottom: 15px;
 }
 
-#humidityDisplay {
+#gr1_humidityDisplay {
     font-size: 16px;
     font-weight: bold;
     color: #333;
@@ -99,7 +99,7 @@ button:hover {
 }
 
 /* Styl dla kontrolek (świeca, wiatrak, temperatura) */
-.fan-control, .light-control, .temperature-control, .humidity-control{
+.gr1_fan-control, .gr1_light-control, .gr1_temperature-control, .gr1_humidity-control{
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -112,7 +112,7 @@ button:hover {
 }
 
 /* Dodatkowe style dla ikon kółka i wiatraka */
-.circle, .fan {
+.gr1_circle, .gr1_fan {
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -122,7 +122,7 @@ button:hover {
 }
 
 
-.fan {
+.gr1_fan {
     width: 40px;
     height: 40px;
     background-color: #4CAF50;
@@ -132,7 +132,7 @@ button:hover {
     animation: spin 0s linear infinite; /* Animacja domyślnie wyłączona */
 }
 
-.fan::before, .fan::after, .fan > div {
+.gr1_fan::before, .gr1_fan::after, .gr1_fan > div {
     content: '';
     position: absolute;
     width: 50%; /* Szerokość łopatki */
@@ -143,15 +143,15 @@ button:hover {
     transform-origin: 0% 0%; /* Punkt obrotu łopatki */
 }
 
-.fan::before {
+.gr1_fan::before {
     transform: rotate(0deg) ;
 }
 
-.fan::after {
+.gr1_fan::after {
     transform: rotate(120deg) ;
 }
 
-.fan > div {
+.gr1_fan > div {
     transform: rotate(240deg) ;
 }
 

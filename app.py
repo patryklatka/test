@@ -8,9 +8,10 @@ import json
 import plotly.graph_objs as go
 from plotly.io import to_html
 import os
-
 from flask_mqtt import Mqtt
-
+from flask_sqlalchemy import SQLAlchemy
+import pymysql
+pymysql.install_as_MySQLdb()
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='gevent')
 
@@ -20,6 +21,23 @@ Uruchamiaj w render.com z: gunicorn -w 1 -k gevent -b 0.0.0.0:$PORT app:app
 Przez to że używam flask_mqtt, warning z websocketem naprawia uruchamianie z: gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app
 """
 
+# # Konfiguracja bazy danych MySQL (freemysqlhosting)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://sql7747736:dh5p3q81iR@sql7.freemysqlhosting.net/sql7747736'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# # Inicjalizacja bazy danych
+# db = SQLAlchemy(app)
+
+# # Model do przechowywania stanów urządzeń
+# class DeviceState(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     device_name = db.Column(db.String(50), unique=True, nullable=False)
+#     state = db.Column(db.String(10), nullable=False)  # np. 'on'/'off'
+
+# # Tworzenie tabeli w bazie (tylko przy pierwszym uruchomieniu)
+# with app.app_context():
+#     db.create_all()
+    
 # Konfiguracja MQTT
 app.config['MQTT_BROKER_URL'] = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
 app.config['MQTT_BROKER_PORT'] = 8883
@@ -32,19 +50,19 @@ app.config['MQTT_TLS_VERSION'] = paho.ssl.PROTOCOL_TLS   # przetestuj też ssl.P
 mqtt = Mqtt(app)
 
 # Tematy MQTT
-mqtt_topic = "sensor/data"
-light_topic = "swiatlo"
-fan_topic = "wiatrak"
-humidity_topic = "wilgotnosc"
+gr1_temperature_topic = "gr1/temperature"
+gr1_light_topic = "gr1/swiatlo"
+gr1_fan_topic = "gr1/wiatrak"
+gr1_humidity_topic = "gr1/wilgotnosc"
 
 # Zmienna przechowująca dane dla wilgotności
-humidity_data = {
+humidity_first_group = {
     "x": [],
     "y": []
 }
 
 # Zmienna przechowująca dane
-data = {
+temperature_first_group = {
     "x": [],
     "y": []
 }
@@ -55,10 +73,10 @@ data = {
 def handle_connect(client, userdata, flags, rc):
     print(f"Connected to MQTT broker with result code {rc}")
     if rc == 0:
-        mqtt.subscribe(mqtt_topic)  # Subskrypcja danych sensora
-        mqtt.subscribe(light_topic)  # Subskrypcja światła
-        mqtt.subscribe(fan_topic)  # Subskrypcja wiatraka
-        mqtt.subscribe(humidity_topic)  # Subskrypcja wilgotności
+        mqtt.subscribe(gr1_temperature_topic)  # Subskrypcja danych sensora
+        mqtt.subscribe(gr1_light_topic)  # Subskrypcja światła
+        mqtt.subscribe(gr1_fan_topic)  # Subskrypcja wiatraka
+        mqtt.subscribe(gr1_humidity_topic)  # Subskrypcja wilgotności
     else:
         print(f"Connection failed with error code {rc}")
 
@@ -69,7 +87,7 @@ def handle_message(client, userdata, message):
     payload = message.payload.decode()  # Dekodowanie ładunku wiadomości
     print(f"Odebrano wiadomość na temacie '{topic}': {payload}")
 
-    if topic == mqtt_topic:  # Obsługa danych sensora
+    if topic == gr1_temperature_topic:  # Obsługa danych sensora
         try:
             json_data = json.loads(payload)
             if "x" in json_data and "y" in json_data:
@@ -80,36 +98,36 @@ def handle_message(client, userdata, message):
         except json.JSONDecodeError:
             try:
                 value = int(payload)
-                x_value = len(data["x"]) + 1
+                x_value = len(temperature_first_group["x"]) + 1
                 y_value = value
             except ValueError:
                 print("Message is neither JSON nor integer")
                 return
 
-        data["x"].append(x_value)
-        data["y"].append(y_value)
+        temperature_first_group["x"].append(x_value)
+        temperature_first_group["y"].append(y_value)
 
         # Emitowanie nowych danych do klienta
         with app.app_context():
-            socketio.emit('new_data', {'x': x_value, 'y': y_value})
+            socketio.emit('gr1_new_temperature_data', {'x': x_value, 'y': y_value})
 
-    elif topic == light_topic:  # Obsługa światła
+    elif topic == gr1_light_topic:  # Obsługa światła
         if payload in ['on', 'off']:
             state = 'włączono' if payload == 'on' else 'wyłączono'
             print(f"Światło zostało {state}")
             # Emitowanie stanu swiatla do klienta
             with app.app_context():
-                socketio.emit('light_state', {'state': payload})
+                socketio.emit('gr1_light_state', {'state': payload})
 
-    elif topic == fan_topic:  # Obsługa wiatraka
+    elif topic == gr1_fan_topic:  # Obsługa wiatraka
         if payload in ['on', 'off']:
             state = 'włączony' if payload == 'on' else 'wyłączony'
             print(f"Wiatrak został {state}")
             # Emitowanie stanu wiatraka do klienta
             with app.app_context():
-                socketio.emit('fan_state', {'state': payload})
+                socketio.emit('gr1_fan_state', {'state': payload})
 
-    elif topic == humidity_topic:  # Obsługa wilgotności
+    elif topic == gr1_humidity_topic:  # Obsługa wilgotności
         try:
             json_data = json.loads(payload)
             if "x" in json_data and "y" in json_data:
@@ -120,36 +138,35 @@ def handle_message(client, userdata, message):
         except json.JSONDecodeError:
             try:
                 value = float(payload)
-                x_value = len(humidity_data["x"]) + 1
+                x_value = len(humidity_first_group["x"]) + 1
                 y_value = value
             except ValueError:
                 print("Message is neither JSON nor float")
                 return
 
-        humidity_data["x"].append(x_value)
-        humidity_data["y"].append(y_value)
+        humidity_first_group["x"].append(x_value)
+        humidity_first_group["y"].append(y_value)
 
         # Emitowanie nowych danych do klienta
         with app.app_context():
-            socketio.emit('new_humidity_data', {'x': x_value, 'y': y_value})
+            socketio.emit('gr1_new_humidity_data', {'x': x_value, 'y': y_value})
 
-    
 
 # Funkcja do obsługi komendy włącz/wyłącz światło
-@socketio.on('light_command')
+@socketio.on('gr1_light_command')
 def handle_light_command(data):
     command = data['command']
     if command in ['on', 'off']:
-        mqtt.publish(light_topic, command)
-        print(f"Wysłano komendę {command} do tematu {light_topic}")
+        mqtt.publish(gr1_light_topic, command)
+        print(f"Wysłano komendę {command} do tematu {gr1_light_topic}")
 
 # Funkcja do obsługi komendy włącz/wyłącz wiatraka
 @socketio.on('fan_command')
 def handle_fan_command(data):
     command = data['command']
     if command in ['on', 'off']:
-        mqtt.publish(fan_topic, command)
-        print(f"Wysłano komendę {command} do tematu {fan_topic}")
+        mqtt.publish(gr1_fan_topic, command)
+        print(f"Wysłano komendę {command} do tematu {gr1_fan_topic}")
 
 
 # Flask routes

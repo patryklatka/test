@@ -15,48 +15,48 @@
         <h1>Menu Główne</h1>
         
         <!-- Nowy kontener na kontrolki -->
-        <div id="controlsContainer" class="controls-container">
+        <div id="controlsContainer" class="gr1_controls-container">
             <h2>Grupa 1</h2>
             <!-- Kontrolki światła -->
-            <div class="light-control">
-                <button id="lightButton">Włącz światło</button>
-                <div class="circle" id="lightIndicator"></div>
+            <div class="gr1_light-control">
+                <button id="gr1_lightButton">Włącz światło</button>
+                <div class="gr1_circle" id="gr1_lightIndicator"></div>
             </div>
 
             <!-- Kontrolki wiatraka -->
-            <div class="fan-control">
-                <button id="fanButton">Włącz wiatrak</button>
-                <div class="fan" id="fanIndicator">
+            <div class="gr1_fan-control">
+                <button id="gr1_fanButton">Włącz wiatrak</button>
+                <div class="gr1_fan" id="gr1_fanIndicator">
                     <div></div> <!-- Trzecia łopatka -->
                 </div>
             </div>
 
             <!-- Kontrolki temperatury -->
-            <div class="temperature-control">
-                <button id="temperatureButton">Temperatura</button>
-                <div id="temperatureDisplay">25°C</div>
+            <div class="gr1_temperature-control">
+                <button id="gr1_temperatureButton">Temperatura</button>
+                <div id="gr1_temperatureDisplay">25°C</div>
             </div>
 
             <!-- Kontrolki wilgotności -->
-            <div class="humidity-control">
-                <button id="humidityButton">Wilgotność</button>
-                <div id="humidityDisplay">25%</div>
+            <div class="gr1_humidity-control">
+                <button id="gr1_humidityButton">Wilgotność</button>
+                <div id="gr1_humidityDisplay">25%</div>
             </div>
         </div>
     </div>
 
-    <!-- Sekcja wykresu -->
-    <div id="plotSection" class="section">
+    <!-- Sekcja wykresu temperatury-->
+    <div id="gr1_temperaturePlotSection" class="section">
         <h1>Temperatura</h1>
-        <button id="backToMenuButtonfromhumidity">Powrót do menu</button>
-        <div id="plot"></div>
+        <button id="gr1_backToMenuButtonFromTemperature">Powrót do menu</button>
+        <div id="gr1_temperaturePlot"></div>
     </div>
 
     <!-- Sekcja wykresu wilgotności --> 
-    <div id="humidityPlotSection" class="hidden">
+    <div id="gr1_humidityPlotSection" class="hidden">
         <h1>Wilgotność</h1>
-        <button id="backToMenuButton">Powrót do menu</button>
-        <div id="humidityPlot"></div>
+        <button id="gr1_backToMenuButtonFromHumidity">Powrót do menu</button>
+        <div id="gr1_humidityPlot"></div>
     </div>
     
     <script src="{{ url_for('static', filename='js/websocket.js') }}"></script>
