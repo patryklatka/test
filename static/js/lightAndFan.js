@@ -58,7 +58,7 @@ $('#gr1_lightButton').on('click', function() {
 // Obsługuje kliknięcie w przycisk "Włącz/wyłącz wiatrak"
 $('#gr1_fanButton').on('click', function() {
     if (fanState === 'off') {
-        socket.emit('fan_command', { command: 'on' });
+        socket.emit('gr1_fan_command', { command: 'on' });
         $('#gr1_fanButton').text('Wyłącz wiatrak');
         fanState = 'on';
         $('#gr1_fanIndicator').css({
@@ -66,7 +66,7 @@ $('#gr1_fanButton').on('click', function() {
             'animation': 'spin 1s linear infinite'
         });
     } else {
-        socket.emit('fan_command', { command: 'off' });
+        socket.emit('gr1_fan_command', { command: 'off' });
         $('#gr1_fanButton').text('Włącz wiatrak');
         fanState = 'off';
         $('#gr1_fanIndicator').css({

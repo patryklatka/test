@@ -1,6 +1,7 @@
 from gevent import monkey
 monkey.patch_all()
 
+from datetime import datetime
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import paho.mqtt.client as paho
@@ -9,8 +10,8 @@ import plotly.graph_objs as go
 from plotly.io import to_html
 import os
 from flask_mqtt import Mqtt
-from flask_sqlalchemy import SQLAlchemy
 import pymysql
+import database
 pymysql.install_as_MySQLdb()
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='gevent')
@@ -21,23 +22,23 @@ Uruchamiaj w render.com z: gunicorn -w 1 -k gevent -b 0.0.0.0:$PORT app:app
 Przez to że używam flask_mqtt, warning z websocketem naprawia uruchamianie z: gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app
 """
 
-# # Konfiguracja bazy danych MySQL (freemysqlhosting)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://sql7747736:dh5p3q81iR@sql7.freemysqlhosting.net/sql7747736'
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Konfiguracja bazy danych MySQL (freemysqlhosting)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://sql7747736:dh5p3q81iR@sql7.freemysqlhosting.net/sql7747736'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# # Inicjalizacja bazy danych
-# db = SQLAlchemy(app)
+database.db.init_app(app)
 
-# # Model do przechowywania stanów urządzeń
-# class DeviceState(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     device_name = db.Column(db.String(50), unique=True, nullable=False)
-#     state = db.Column(db.String(10), nullable=False)  # np. 'on'/'off'
 
-# # Tworzenie tabeli w bazie (tylko przy pierwszym uruchomieniu)
-# with app.app_context():
-#     db.create_all()
+# Tworzenie tabeli w bazie (tylko przy pierwszym uruchomieniu)
+with app.app_context():
+    database.db.create_all()  
+    ###############################################
+    # chwilowe uzupelnianie tabeli
     
+    # database.populate_sensor_types(database.typy_sensorow)
+    # database.populate_sensors(database.slownik_sensorow)
+
+    ###################################
 # Konfiguracja MQTT
 app.config['MQTT_BROKER_URL'] = "1855d1e75c264a00b0fdffc55e0ec025.s1.eu.hivemq.cloud"
 app.config['MQTT_BROKER_PORT'] = 8883
@@ -54,18 +55,6 @@ gr1_temperature_topic = "gr1/temperature"
 gr1_light_topic = "gr1/swiatlo"
 gr1_fan_topic = "gr1/wiatrak"
 gr1_humidity_topic = "gr1/wilgotnosc"
-
-# Zmienna przechowująca dane dla wilgotności
-humidity_first_group = {
-    "x": [],
-    "y": []
-}
-
-# Zmienna przechowująca dane
-temperature_first_group = {
-    "x": [],
-    "y": []
-}
 
 
 # Obsługa połączenia MQTT
@@ -87,29 +76,15 @@ def handle_message(client, userdata, message):
     payload = message.payload.decode()  # Dekodowanie ładunku wiadomości
     print(f"Odebrano wiadomość na temacie '{topic}': {payload}")
 
-    if topic == gr1_temperature_topic:  # Obsługa danych sensora
-        try:
-            json_data = json.loads(payload)
-            if "x" in json_data and "y" in json_data:
-                x_value = json_data["x"]
-                y_value = json_data["y"]
-            else:
-                raise ValueError("Message JSON lacks 'x' and 'y'")
-        except json.JSONDecodeError:
-            try:
-                value = int(payload)
-                x_value = len(temperature_first_group["x"]) + 1
-                y_value = value
-            except ValueError:
-                print("Message is neither JSON nor integer")
-                return
-
-        temperature_first_group["x"].append(x_value)
-        temperature_first_group["y"].append(y_value)
+    if topic == gr1_temperature_topic:  # Obsługa temperatury
+        measurement_date = datetime.now().replace(microsecond=0).isoformat()
+        temperature = payload
+        print(f"Odebrana temperatura to {temperature} i czas {measurement_date}")
 
         # Emitowanie nowych danych do klienta
         with app.app_context():
-            socketio.emit('gr1_new_temperature_data', {'x': x_value, 'y': y_value})
+            socketio.emit('gr1_new_temperature_data', {'x': measurement_date, 'y': temperature})
+            database.add_measurement(3, measurement_date, temperature)
 
     elif topic == gr1_light_topic:  # Obsługa światła
         if payload in ['on', 'off']:
@@ -118,38 +93,39 @@ def handle_message(client, userdata, message):
             # Emitowanie stanu swiatla do klienta
             with app.app_context():
                 socketio.emit('gr1_light_state', {'state': payload})
+                database.update_sensor_state(1, payload) 
+                """
+                Brak uniwersalności kodu. 
+                Opieram się na kolejności elementów w bazie zgodnie z: ["Czujnik światła", "Wiatrak", "Czujnik temperatury", "Czujnik wilogtności"]
+                                                    Odpowiednio ID:             1               2               3                   4
+                KONIECZNIE DO POPRAWY
+                """
 
     elif topic == gr1_fan_topic:  # Obsługa wiatraka
         if payload in ['on', 'off']:
             state = 'włączony' if payload == 'on' else 'wyłączony'
             print(f"Wiatrak został {state}")
+            # Aktualizacja stanu wiatraka w bazie danych
             # Emitowanie stanu wiatraka do klienta
             with app.app_context():
                 socketio.emit('gr1_fan_state', {'state': payload})
+                database.update_sensor_state(2, payload)
+                """
+                Brak uniwersalności kodu. 
+                Opieram się na kolejności elementów w bazie zgodnie z: ["Czujnik światła", "Wiatrak", "Czujnik temperatury", "Czujnik wilogtności"]
+                                                Odpowiednio ID:             1               2               3                   4
+                KONIECZNIE DO POPRAWY
+                """
 
     elif topic == gr1_humidity_topic:  # Obsługa wilgotności
-        try:
-            json_data = json.loads(payload)
-            if "x" in json_data and "y" in json_data:
-                x_value = json_data["x"]
-                y_value = json_data["y"]
-            else:
-                raise ValueError("Message JSON lacks 'x' and 'y'")
-        except json.JSONDecodeError:
-            try:
-                value = float(payload)
-                x_value = len(humidity_first_group["x"]) + 1
-                y_value = value
-            except ValueError:
-                print("Message is neither JSON nor float")
-                return
-
-        humidity_first_group["x"].append(x_value)
-        humidity_first_group["y"].append(y_value)
+        measurement_date = datetime.now().replace(microsecond=0).isoformat()
+        humidity = payload
+        print(f"Odebrana wilgotnosc to {humidity} i czas {measurement_date}")
 
         # Emitowanie nowych danych do klienta
         with app.app_context():
-            socketio.emit('gr1_new_humidity_data', {'x': x_value, 'y': y_value})
+            socketio.emit('gr1_new_humidity_data', {'x': measurement_date, 'y': humidity})
+            database.add_measurement(4, measurement_date, humidity)
 
 
 # Funkcja do obsługi komendy włącz/wyłącz światło
@@ -161,13 +137,46 @@ def handle_light_command(data):
         print(f"Wysłano komendę {command} do tematu {gr1_light_topic}")
 
 # Funkcja do obsługi komendy włącz/wyłącz wiatraka
-@socketio.on('fan_command')
+@socketio.on('gr1_fan_command')
 def handle_fan_command(data):
     command = data['command']
     if command in ['on', 'off']:
         mqtt.publish(gr1_fan_topic, command)
         print(f"Wysłano komendę {command} do tematu {gr1_fan_topic}")
 
+
+# Inicjalne wysyłanie stanów sensorów do klienta
+@socketio.on('get_states')
+def send_states():
+    try:
+        # Pobranie stanów z bazy danych
+        states = database.SensorsStates.query.all()
+        states_list = [
+            {'sensor_id': state.sensor_id, 'state': state.state}
+            for state in states
+        ]
+        # Emitowanie do klienta
+        print("Stany po odświeżeniu:", states_list)
+        emit('initial_states', states_list)
+    except Exception as e:
+        print(f"Error fetching states: {e}")
+
+
+# Funkcja do wysyłania danych wykresu przy połączeniu WebSocket
+@socketio.on('connect')
+def send_initial_chart_data():
+    # Pobranie danych z bazy dla temperatury
+    temp_measurements = database.Measurements.query.filter_by(sensor_id=3).order_by(database.Measurements.date).all()
+    data = [{"x": temp.date.isoformat(), "y": temp.value} for temp in temp_measurements]
+    print("initial temp data", data)
+    # Wysłanie danych do klienta
+    socketio.emit('initial_temp_chart_data', data)
+
+    humidity_measurements = database.Measurements.query.filter_by(sensor_id=4).order_by(database.Measurements.date).all()
+    data = [{"x": humidity.date.isoformat(), "y": humidity.value} for humidity in humidity_measurements]
+    print("initial humidity", data)
+    # Wysłanie danych do klienta
+    socketio.emit('initial_humidity_chart_data', data)
 
 # Flask routes
 @app.route('/')
