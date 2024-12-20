@@ -7,3 +7,5 @@ gunicorn==23.0.0
 gevent
 flask_mqtt
 gevent-websocket
+pymysql
+flask_sqlalchemy
