@@ -17,7 +17,7 @@ socket.on('gr1_new_temperature_data', function(data) {
         Plotly.extendTraces('gr1_temperaturePlot', {
             x: [[data.x]],
             y: [[data.y]]
-        }, [0], number_plot_points);
+        }, [0], number_plot_temp_points);
     }
 });
 

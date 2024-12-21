@@ -25,7 +25,13 @@ Przez to że używam flask_mqtt, warning z websocketem naprawia uruchamianie z: 
 # Konfiguracja bazy danych MySQL (freemysqlhosting)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://sql7747736:dh5p3q81iR@sql7.freemysqlhosting.net/sql7747736'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_recycle': 280,  # Odświeżaj połączenie co 280 sekund
+    'pool_pre_ping': True,  # Pinguj serwer przed użyciem połączenia
+    'connect_args': {
+        'connect_timeout': 30  # Maksymalny timeout połączenia
+    }
+}
 database.db.init_app(app)
 
 
