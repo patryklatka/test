@@ -1,13 +1,10 @@
 from gevent import monkey
 monkey.patch_all()
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import paho.mqtt.client as paho
-import json
-import plotly.graph_objs as go
-from plotly.io import to_html
 import os
 from flask_mqtt import Mqtt
 import pymysql
@@ -25,13 +22,13 @@ Przez to że używam flask_mqtt, warning z websocketem naprawia uruchamianie z: 
 # Konfiguracja bazy danych MySQL (freemysqlhosting)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://sql7747736:dh5p3q81iR@sql7.freemysqlhosting.net/sql7747736'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_recycle': 280,  # Odświeżaj połączenie co 280 sekund
-    'pool_pre_ping': True,  # Pinguj serwer przed użyciem połączenia
-    'connect_args': {
-        'connect_timeout': 30  # Maksymalny timeout połączenia
-    }
-}
+# app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+#     'pool_recycle': 280,  # Odświeżaj połączenie co 280 sekund
+#     'pool_pre_ping': True,  # Pinguj serwer przed użyciem połączenia
+#     'connect_args': {
+#         'connect_timeout': 30  # Maksymalny timeout połączenia
+#     }
+# }
 database.db.init_app(app)
 
 
@@ -83,7 +80,7 @@ def handle_message(client, userdata, message):
     print(f"Odebrano wiadomość na temacie '{topic}': {payload}")
 
     if topic == gr1_temperature_topic:  # Obsługa temperatury
-        measurement_date = datetime.now().replace(microsecond=0).isoformat()
+        measurement_date = (datetime.now() + timedelta(hours=1)).replace(microsecond=0).isoformat()
         temperature = payload
         print(f"Odebrana temperatura to {temperature} i czas {measurement_date}")
 
@@ -124,7 +121,7 @@ def handle_message(client, userdata, message):
                 """
 
     elif topic == gr1_humidity_topic:  # Obsługa wilgotności
-        measurement_date = datetime.now().replace(microsecond=0).isoformat()
+        measurement_date = (datetime.now() + timedelta(hours=1)).replace(microsecond=0).isoformat()
         humidity = payload
         print(f"Odebrana wilgotnosc to {humidity} i czas {measurement_date}")
 
