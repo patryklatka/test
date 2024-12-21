@@ -91,25 +91,19 @@ def update_sensor_state(sensor_id, state):
     """
     Funkcja do aktualizacji stanu sensora w bazie danych.
     """
-    # Konwertowanie stanu na wartość 0 (wyłączony) lub 1 (włączony)
-    # state_value = 1 if state == 'on' else 0
-    
-    # Znajdź odpowiedni sensor w tabeli SensorsStates
-    # try: 
-    sensor_state = SensorsStates.query.filter_by(sensor_id=sensor_id).first()
-    # except Exception as e:
-    #     print(f"tu sie wywala {e}")
-    
-    if sensor_state:
-        # Jeśli stan już istnieje, zaktualizuj go
-        sensor_state.state = state
-    else:
-        # Jeśli stan nie istnieje, utwórz nowy wpis
-        sensor_state = SensorsStates(sensor_id=sensor_id, state=state)
-        db.session.add(sensor_state)
-
-    # Zapisz zmiany w bazie
-    db.session.commit()
+    try:
+        sensor_state = SensorsStates.query.filter_by(sensor_id=sensor_id).first()
+        if sensor_state:
+            # Jeśli stan już istnieje, zaktualizuj go
+            sensor_state.state = state
+        else:
+            # Jeśli stan nie istnieje, utwórz nowy wpis
+            sensor_state = SensorsStates(sensor_id=sensor_id, state=state)
+            db.session.add(sensor_state)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating sensor state: {e}")
 
 
 # Funkcja zwracająca wszystkie bieżace stany czujników on/off. 
@@ -121,15 +115,19 @@ def add_measurement(sensor_id, measurement_date, value):
     """
     Dodaje pomiar do tabeli Measurements i usuwa najstarsze dane, jeśli liczba przekracza 10.
     """
-    # Dodaj nowy pomiar
-    new_measurement = Measurements(sensor_id=sensor_id, date=measurement_date, value=value)
-    db.session.add(new_measurement)
-    db.session.commit()
-
-    # Sprawdź liczbę pomiarów dla danego czujnika
-    measurements = Measurements.query.filter_by(sensor_id=sensor_id).order_by(Measurements.date).all()
-    if len(measurements) > 10:
-        # Usuń najstarsze pomiary, jeśli liczba przekracza 10
-        for measurement in measurements[:-10]:
-            db.session.delete(measurement)
+    try:
+        # Dodaj nowy pomiar
+        new_measurement = Measurements(sensor_id=sensor_id, date=measurement_date, value=value)
+        db.session.add(new_measurement)
         db.session.commit()
+
+        # Sprawdź liczbę pomiarów dla danego czujnika
+        measurements = Measurements.query.filter_by(sensor_id=sensor_id).order_by(Measurements.date).all()
+        if len(measurements) > 10:
+            # Usuń najstarsze pomiary, jeśli liczba przekracza 10
+            for measurement in measurements[:-10]:
+                db.session.delete(measurement)
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding measurement: {e}")
